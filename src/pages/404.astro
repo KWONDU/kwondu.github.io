@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Not found">
+  <main class="nf">
+    <div class="bp" data-label="#404">
+      <p class="mono code">404</p>
+      <h1>This page doesn't exist.</h1>
+      <p><a href="/">Back to the homepage</a></p>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    max-width: none;
+  }
+  .nf .bp::before,
+  .nf .bp::after {
+    opacity: 1;
+  }
+  .code {
+    margin: 0;
+    color: var(--muted);
+  }
+  h1 {
+    margin: 6px 0 12px;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+</style>

@@ -1,0 +1,24 @@
+# build
+node_modules/
+dist/
+.astro/
+
+# local logs
+logs/
+*.log
+npm-debug.log*
+
+# AI agents / editors (local only)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+.cursor/
+.vscode/
+.idea/
+
+# env / OS
+.env
+.env.*
+.DS_Store
+Thumbs.db

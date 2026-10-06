@@ -1,0 +1,56 @@
+---
+interface Props {
+  id: string;
+  index: number;
+  title: string;
+}
+const { id, index, title } = Astro.props;
+---
+<section id={id} class="section" aria-labelledby={`${id}-title`}>
+  <div class="bp" data-label={`#${id}`}>
+    <header class="section-head">
+      <span class="mono idx">{String(index).padStart(2, '0')}</span>
+      <h2 id={`${id}-title`}>{title}</h2>
+    </header>
+    <slot />
+  </div>
+</section>
+
+<style>
+  .section + .section {
+    margin-top: 104px;
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .section-head::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+    transform: translateY(-6px);
+  }
+  .idx {
+    color: var(--muted);
+  }
+  h2 {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  @media (max-width: 960px) {
+    .section + .section {
+      margin-top: 80px;
+    }
+    h2 {
+      font-size: 30px;
+    }
+  }
+</style>

@@ -1,0 +1,240 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import Icon from './Icon.astro';
+import { ext } from '../lib/links';
+import { getProfile } from '../lib/content';
+
+interface Props {
+  pub: CollectionEntry<'publications'>;
+}
+const { pub } = Astro.props;
+const { title, venue, venueShort, cover, authors, links } = pub.data;
+const { name: self, coauthors } = await getProfile();
+
+const parsed = authors.map((raw) => {
+  const [, name, marks] = raw.match(/^(.*?)\s*([*#]*)$/)!;
+  return { name, marks, self: name === self, url: coauthors[name] };
+});
+---
+<article class:list={['pub', { 'no-cover': !cover }]}>
+  {
+    cover && (
+      <div class="cover">
+        <Image
+          src={cover}
+          alt=""
+          widths={[360, 720]}
+          sizes="(max-width: 600px) 100vw, 180px"
+          quality={88}
+        />
+      </div>
+    )
+  }
+  <div class="body">
+    <span class="mono venue" tabindex="0" data-tip={venue}>
+      <span class="dot" aria-hidden="true"></span>{venueShort}<span class="sr-only"> ({venue})</span>
+    </span>
+    <h3>{title}</h3>
+    <p class="authors">
+      {
+        parsed.map((a, i) => (
+          <>
+            {a.self ? (
+              <span class="self">{a.name}</span>
+            ) : a.url ? (
+              <a href={a.url} {...ext(a.url)}>{a.name}</a>
+            ) : (
+              <span>{a.name}</span>
+            )}
+            {a.marks && <sup class:list={{ self: a.self }}>{a.marks}</sup>}
+            {i < parsed.length - 1 && ', '}
+          </>
+        ))
+      }
+    </p>
+    <div class="actions">
+      {
+        Object.entries(links).map(([label, url]) => (
+          <a class="mono action" href={url} {...ext(url)}>
+            {label}
+            <Icon name="arrow" size={12} />
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</article>
+
+<style>
+  .pub {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    column-gap: 28px;
+    align-items: start;
+  }
+  /* Without a cover, keep the text in the same column as the others. */
+  .no-cover .body {
+    grid-column: 2;
+  }
+  .cover {
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--cover-bg);
+    box-shadow: 0 0 0 1px var(--rule);
+    padding: 8px;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .pub:hover .cover {
+    box-shadow: 0 0 0 1px var(--rule), 0 8px 24px -12px rgb(0 0 0 / 0.25);
+    transform: translateY(-1px);
+  }
+  .venue {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: help;
+    outline: none;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 1.5px;
+    background: currentColor;
+  }
+
+  /* Full venue name: instant tooltip on hover, tap, or keyboard focus. */
+  .venue::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: -6px;
+    top: calc(100% + 9px);
+    z-index: 10;
+    width: max-content;
+    max-width: min(520px, calc(100vw - 48px));
+    padding: 7px 11px;
+    border-radius: 7px;
+    background: var(--ink);
+    color: var(--paper);
+    font: 500 12.5px/1.45 var(--sans);
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: normal;
+    box-shadow: 0 6px 20px -8px rgb(0 0 0 / 0.35);
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition: opacity 0.14s ease, transform 0.14s ease;
+  }
+  /* Tooltip tail */
+  .venue::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: calc(100% + 4px);
+    z-index: 10;
+    width: 10px;
+    height: 10px;
+    background: var(--ink);
+    border-radius: 1.5px;
+    opacity: 0;
+    transform: translateY(-4px) rotate(45deg);
+    pointer-events: none;
+    transition: opacity 0.14s ease, transform 0.14s ease;
+  }
+  .venue:hover::after,
+  .venue:focus-visible::after,
+  .venue:focus::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .venue:hover::before,
+  .venue:focus-visible::before,
+  .venue:focus::before {
+    opacity: 1;
+    transform: translateY(0) rotate(45deg);
+  }
+  .venue:focus-visible {
+    border-radius: 3px;
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  h3 {
+    margin: 6px 0 8px;
+    font-size: 17.5px;
+    font-weight: 600;
+    line-height: 1.38;
+    letter-spacing: -0.008em;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+  .authors {
+    margin: 0;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+  .authors a {
+    color: inherit;
+    text-decoration-color: var(--rule);
+  }
+  .authors a:hover {
+    color: var(--accent);
+  }
+  .self {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  sup {
+    font-family: var(--mono);
+    font-size: 10px;
+    margin-left: 1px;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-2);
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .action:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  @media (max-width: 600px) {
+    .pub {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 16px;
+    }
+    .no-cover .body {
+      grid-column: auto;
+    }
+    /* Shrink the frame to the figure and center it. */
+    .cover {
+      justify-self: center;
+      max-width: 100%;
+    }
+    .cover :global(img) {
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 220px;
+    }
+  }
+</style>

@@ -1,0 +1,333 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Section from '../components/Section.astro';
+import Publication from '../components/Publication.astro';
+import Timeline from '../components/Timeline.astro';
+import Icon from '../components/Icon.astro';
+import { getProfile, getSections, getPublications } from '../lib/content';
+import { ext } from '../lib/links';
+
+const profile = await getProfile();
+const sections = await Promise.all(
+  (await getSections()).map(async (s) => ({ ...s, Content: (await render(s.entry)).Content })),
+);
+
+const pubs = await getPublications();
+const years = [...new Set(pubs.map((p) => p.year))];
+
+const showcase = await Promise.all(
+  (await getCollection('showcase', (s) => !s.data.hidden))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map(async (s) => ({ ...s, Content: (await render(s)).Content })),
+);
+
+const updated = new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+---
+<Base>
+  <div class="shell">
+    <Sidebar />
+    <main>
+      {
+        sections.map(({ entry, anchor, Content }, i) => (
+          <Section id={anchor} index={i + 1} title={entry.data.title}>
+            {entry.body?.trim() && (
+              <div class:list={['prose', { lead: entry.data.type === 'text' }]}>
+                <Content />
+              </div>
+            )}
+
+            {entry.data.type === 'publications' && (
+              <>
+                {years.map((y) => (
+                  <div class="year">
+                    <span class="year-label">{y}</span>
+                    <div class="year-items">
+                      {pubs
+                        .filter((p) => p.year === y)
+                        .map((p) => (
+                          <Publication pub={p.entry} />
+                        ))}
+                    </div>
+                  </div>
+                ))}
+                <p class="mono legend">
+                  <sup>*</sup> Equal contribution &nbsp;·&nbsp; <sup>#</sup> Corresponding author
+                </p>
+              </>
+            )}
+
+            {entry.data.type === 'timeline' && <Timeline items={entry.data.items} />}
+
+            {entry.data.type === 'list' && (
+              <ul class="awards">
+                {entry.data.items.map((a) => (
+                  <li>
+                    {entry.data.icon && (
+                      <span class:list={['award-icon', a.medal]} title={a.medal}>
+                        <Icon name={entry.data.icon} size={15} />
+                      </span>
+                    )}
+                    <span class="award-name">{a.url ? <a href={a.url} {...ext(a.url)}>{a.name}</a> : a.name}</span>
+                    <span class="leader" aria-hidden="true" />
+                    {a.date && <span class="mono award-date">{a.date}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {entry.data.type === 'showcase' && (
+              <div class="shows">
+                {showcase.map(({ data, Content }) => (
+                  <article class="show">
+                    {data.logo && (
+                      <span class="show-logo">
+                        <img src={data.logo.src} width={data.logo.width} height={data.logo.height} alt="" loading="lazy" />
+                      </span>
+                    )}
+                    <div class="show-body">
+                      {data.date && <span class="mono show-date">{data.date}</span>}
+                      <h3>{data.title}</h3>
+                      <Content />
+                      {data.url && (
+                        <a class="mono show-link" href={data.url} {...ext(data.url)}>
+                          Visit <Icon name="arrow" size={12} />
+                        </a>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </Section>
+        ))
+      }
+
+      <footer class="foot mono">
+        <span>© {new Date().getFullYear()} {profile.name}</span>
+        <span>Updated {updated}</span>
+      </footer>
+    </main>
+  </div>
+</Base>
+
+<style>
+  /* Markdown body of a section. In "text" sections, **bold** becomes a highlighter stroke. */
+  .prose :global(p) {
+    margin: 0 0 1em;
+    text-wrap: pretty;
+  }
+  .prose :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .prose + :global(*) {
+    margin-top: 28px;
+  }
+  .lead :global(p) {
+    font-size: 18px;
+    line-height: 1.7;
+  }
+  .lead :global(strong) {
+    color: var(--ink);
+    font-weight: 500;
+    background: linear-gradient(transparent 52%, var(--mark) 52%, var(--mark) 92%, transparent 92%);
+    padding: 0 2px;
+    margin: 0 -2px;
+  }
+
+  .year {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    margin-left: -88px;
+  }
+  .year + .year {
+    margin-top: 44px;
+  }
+  .year-label {
+    font-family: var(--serif);
+    font-size: 26px;
+    line-height: 1;
+    color: var(--muted);
+    padding-top: 2px;
+  }
+  .year-items {
+    margin-left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .legend {
+    margin: 36px 0 0;
+    color: var(--muted);
+  }
+  .legend sup {
+    font-size: 11px;
+  }
+
+  .awards {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .awards li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 0;
+  }
+  .award-icon {
+    align-self: center;
+    display: inline-flex;
+    color: var(--gold);
+  }
+  .award-icon.gold {
+    color: var(--gold);
+  }
+  .award-icon.silver {
+    color: var(--silver);
+  }
+  .award-icon.bronze {
+    color: var(--bronze);
+  }
+  .award-name {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .leader {
+    flex: 1;
+    border-bottom: 1px dotted var(--muted);
+    opacity: 0.6;
+    transform: translateY(-4px);
+  }
+  .award-date {
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .shows {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  .show {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    column-gap: 28px;
+    align-items: start;
+  }
+  .show-logo {
+    display: block;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+  .show-date {
+    color: var(--muted);
+  }
+  .show h3 {
+    margin: 4px 0 10px;
+    font-size: 17.5px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .show-body :global(p) {
+    margin: 0 0 0.7em;
+    font-size: 15px;
+    line-height: 1.75;
+    word-break: keep-all;
+  }
+  .show-body :global(strong) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .show-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 120px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+  }
+
+  @media (max-width: 960px) {
+    .year {
+      grid-template-columns: minmax(0, 1fr);
+      margin-left: 0;
+      row-gap: 18px;
+    }
+    .year-items {
+      margin-left: 0;
+    }
+    .foot {
+      margin-top: 80px;
+    }
+  }
+  @media (max-width: 600px) {
+    .lead :global(p) {
+      font-size: 17px;
+    }
+    .show {
+      grid-template-columns: 96px minmax(0, 1fr);
+      column-gap: 18px;
+    }
+  }
+</style>
+
+<script>
+  // Highlight the section currently in view
+  const links = new Map(
+    [...document.querySelectorAll<HTMLAnchorElement>('[data-toc]')].map((a) => [a.dataset.toc!, a]),
+  );
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        links.forEach((a) => a.classList.remove('active'));
+        links.get(e.target.id)?.classList.add('active');
+      }
+    },
+    { rootMargin: '-35% 0px -60% 0px' },
+  );
+  document.querySelectorAll('main section[id]').forEach((s) => observer.observe(s));
+
+  // Theme: auto -> light -> dark
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle')!;
+  const themeLabel = themeBtn.querySelector('.label')!;
+  const order = ['auto', 'light', 'dark'] as const;
+  const paint = () => {
+    const t = root.dataset.theme ?? 'auto';
+    themeLabel.textContent = t[0].toUpperCase() + t.slice(1);
+  };
+  paint();
+  themeBtn.addEventListener('click', () => {
+    const cur = (root.dataset.theme ?? 'auto') as (typeof order)[number];
+    const next = order[(order.indexOf(cur) + 1) % order.length];
+    if (next === 'auto') delete root.dataset.theme;
+    else root.dataset.theme = next;
+    try {
+      if (next === 'auto') localStorage.removeItem('theme');
+      else localStorage.setItem('theme', next);
+    } catch {}
+    paint();
+  });
+
+  // Blueprint overlay
+  const bpBtn = document.getElementById('blueprint-toggle')!;
+  bpBtn.addEventListener('click', () => {
+    const on = root.dataset.blueprint === 'on';
+    if (on) delete root.dataset.blueprint;
+    else root.dataset.blueprint = 'on';
+    bpBtn.setAttribute('aria-pressed', String(!on));
+  });
+</script>
