@@ -1,7 +1,7 @@
 ---
 title: 프로메사 (Promesa)
 date: "Aug. 2025"
-url: https://ceos-promesa.vercel.app/
+url: https://ceos-promesa.vercel.app
 logo: ../images/logos/promesa.svg
 ---
 

@@ -9,5 +9,4 @@ authors:
   - Dongha Lee#
 links:
   Paper: https://arxiv.org/abs/2605.07134
-  Code: https://github.com/kwondu/region4web
 ---

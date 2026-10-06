@@ -11,14 +11,15 @@ interface Props {
 }
 const profile = await getProfile();
 const { title = profile.name, description = profile.description } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+// No trailing slash: https://kwondu.github.io, not https://kwondu.github.io/
+const canonical = new URL(Astro.url.pathname, Astro.site).href.replace(/\/$/, '');
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: profile.name,
   jobTitle: profile.title,
   affiliation: { '@type': 'Organization', name: profile.affiliation.name },
-  url: Astro.site?.toString(),
+  url: canonical,
   email: profile.links.find((l) => l.url.startsWith('mailto:'))?.url,
   sameAs: profile.links.filter((l) => l.url.startsWith('http')).map((l) => l.url),
 };
