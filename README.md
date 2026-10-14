@@ -44,7 +44,7 @@ Each file in `content/sections/` has a `title` and a `type`:
 
 Copy an existing file in `content/publications/`. Put the cover in `content/images/covers/`.
 
-- Author suffixes: `*` equal contribution, `#` corresponding author. Your own name is bolded automatically.
+- Author suffixes: `*` equal contribution, `#` (or `†`) corresponding author, shown as `†`. Your own name is bolded automatically.
 - `links:` takes one line per button, e.g. `Paper: https://...` and `Code: https://...`.
 - Order and year grouping come from the arXiv link (`arxiv.org/abs/2502.11735` → Feb 2025, then by ID).
   Papers without an arXiv link need `date: 2025-02-17` instead.

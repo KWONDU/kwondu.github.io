@@ -64,7 +64,7 @@ const publications = defineCollection({
       selected: z.boolean().default(false),
       hidden: z.boolean().default(false),
       cover: image().optional(),
-      // Suffix "*" for equal contribution, "#" for corresponding author.
+      // Suffix "*" for equal contribution, "#" (or "†") for corresponding author.
       authors: z.array(z.string()),
       links: z.record(z.string(), z.url()).default({}),
     }),

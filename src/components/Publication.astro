@@ -13,8 +13,9 @@ const { title, venue, venueShort, cover, authors, links } = pub.data;
 const { name: self, coauthors } = await getProfile();
 
 const parsed = authors.map((raw) => {
-  const [, name, marks] = raw.match(/^(.*?)\s*([*#]*)$/)!;
-  return { name, marks, self: name === self, url: coauthors[name] };
+  const [, name, marks] = raw.match(/^(.*?)\s*([*#†]*)$/)!;
+  // "#" in markdown is shown as a dagger.
+  return { name, marks: marks.replace(/#/g, '†'), self: name === self, url: coauthors[name] };
 });
 ---
 <article class:list={['pub', { 'no-cover': !cover }]}>
